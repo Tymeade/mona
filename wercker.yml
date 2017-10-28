@@ -1,0 +1,68 @@
+deploy-api:
+    box: python:3.6
+    steps:
+        - pip-install:
+            requirements_file: 'mona-api/requirements.txt'
+        - internal/docker-push:
+            username: $DOCKER_USER
+            password: $DOCKER_PASSWORD
+            repository: $DOCKER_USER/$API_DOCKER_IMAGE
+            ports: "$API_PORT_INTERNAL"
+            cmd: /bin/bash -c "cd /pipeline/source && python mona-api/app/hello_world.py"
+        - add-ssh-key:
+            keyname: WERCKER_DEPLOY
+        - add-to-known_hosts:
+            hostname: "$HOST"
+        - script:
+            name: pull latest image
+            code: ssh root@$HOST docker pull $DOCKER_USER/$API_DOCKER_IMAGE:latest
+        - script:
+            name: stop running container
+            code: ssh root@$HOST docker stop $API_DOCKER_IMAGE || echo 'failed to stop running container'
+        - script:
+            name: remove stopped container
+            code: ssh root@$HOST docker rm $API_DOCKER_IMAGE || echo 'failed to remove stopped container'
+        - script:
+            name: remove image behind stopped container
+            code: ssh root@$HOST docker rmi $DOCKER_USER/$API_DOCKER_IMAGE:current || echo 'failed to remove image behind stopped container'
+        - script:
+            name: tag newly pulled image
+            code: ssh root@$HOST docker tag $DOCKER_USER/$API_DOCKER_IMAGE:latest $DOCKER_USER/$API_DOCKER_IMAGE:current
+        - script:
+            name: run new container
+            code: ssh root@$HOST docker run -d -p $API_PORT_EXTERNAL:$API_PORT_INTERNAL --name $API_DOCKER_IMAGE $DOCKER_USER/$API_DOCKER_IMAGE:current
+
+deploy-client:
+    box: node:8.8.1
+    steps:
+        - script:
+            name: npm install
+            code: (cd mona-client && npm install)
+        - internal/docker-push:
+            username: $DOCKER_USER
+            password: $DOCKER_PASSWORD
+            repository: $DOCKER_USER/$CLIENT_DOCKER_IMAGE
+            ports: "$CLIENT_INTERNAL_PORT"
+            cmd: /bin/bash -c "cd /pipeline/source && node mona-client/src/server.js"
+        - add-ssh-key:
+            keyname: WERCKER_DEPLOY
+        - add-to-known_hosts:
+            hostname: "$HOST"
+        - script:
+            name: pull latest image
+            code: ssh root@$HOST docker pull $DOCKER_USER/$CLIENT_DOCKER_IMAGE:latest
+        - script:
+            name: stop running container
+            code: ssh root@$HOST docker stop $CLIENT_DOCKER_IMAGE || echo 'failed to stop running container'
+        - script:
+            name: remove stopped container
+            code: ssh root@$HOST docker rm $CLIENT_DOCKER_IMAGE || echo 'failed to remove stopped container'
+        - script:
+            name: remove image behind stopped container
+            code: ssh root@$HOST docker rmi $DOCKER_USER/$CLIENT_DOCKER_IMAGE:current || echo 'failed to remove image behind stopped container'
+        - script:
+            name: tag newly pulled image
+            code: ssh root@$HOST docker tag $DOCKER_USER/$CLIENT_DOCKER_IMAGE:latest $DOCKER_USER/$CLIENT_DOCKER_IMAGE:current
+        - script:
+            name: run new container
+            code: ssh root@$HOST docker run -d -p $CLIENT_PORT_EXTERNAL:$CLIENT_PORT_INTERNAL --name $CLIENT_DOCKER_IMAGE $DOCKER_USER/$CLIENT_DOCKER_IMAGE:current
