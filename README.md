@@ -16,7 +16,7 @@ they are the ones which I'm testing on.
 (cd mona-client && npm install)
 ```
 
-**Note**: Of course you can separate these commands. That's just a copy-paste-ready one-liner.
+**Note**: Of course you can use these commands separately. That's just a copy-paste-ready one-liner.
 
 ### Usage
 
