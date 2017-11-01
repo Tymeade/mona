@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Sandbox for testing API and stuff</title>
+  </head>
+  <style>
+    html { height: 100%; }
+    body {
+      font-family: Helvetica, Arial, sans-serif;
+      position: absolute;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      margin: 0;
+      width: 100%;
+      min-height: 100%;
+      background-color: #eee;
+    }
+    .content {
+      padding: 30px 40px 10px 40px;
+      background-color: #fff;
+      border-radius: 10px;
+      min-width: 400px;
+    }
+    .form-group { padding: 10px 0px; }
+    label { display: block; margin-bottom: 5px; }
+  </style>
+  <body>
+    <div class="content">
+      <!-- TODO: set action attribute to your api -->
+      <form enctype="multipart/form-data" action="/fake-api/v0/transform/" method="POST" target="_black">
+        <div class="form-group">
+          <label>Source image:</label>
+          <input type="file" name="source" accept="image/*">
+        </div>
+
+        <div class="form-group">
+          <label>Style image:</label>
+          <input type="file" name="style" accept="image/*">
+        </div>
+
+        <div class="form-group">
+          <input type="submit" value="Submit">
+        </div>
+      </form>
+    </div>
+  </body>
+</html>
