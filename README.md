@@ -7,7 +7,7 @@
 * `nodejs 8.4.0`
 * `npm 5.5.1`
 
-**Note** You probably shouldn't care of the versions. I wrote these here because
+**Note** You probably shouldn't worry about the versions. I wrote these here because
 they are the ones which I'm testing on.
 
 ### Installation
