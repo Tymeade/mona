@@ -66,3 +66,54 @@ deploy-client:
         - script:
             name: run new container
             code: ssh root@$HOST docker run -d -p $CLIENT_PORT_EXTERNAL:$CLIENT_PORT_INTERNAL --name $CLIENT_DOCKER_IMAGE $DOCKER_USER/$CLIENT_DOCKER_IMAGE:current
+
+deploy-nginx:
+    # Using `alpine` - the minimalist linux distribution.
+    box: nginx:alpine
+    steps:
+        - script:
+            name: log
+            code: cat /pipeline/source/nginx/nginx.conf
+        - internal/docker-push:
+            disable-sync: true
+            username: $DOCKER_USER
+            password: $DOCKER_PASSWORD
+            repository: $DOCKER_USER/$NGINX_DOCKER_IMAGE
+            ports: "80"
+            # This `-g 'daemon off;'` stuff is essential!
+            # We need it to prevent nginx daemonization and instant container exit.
+            cmd: /bin/sh -c "mkdir -p /etc/nginx/conf.d/ && cp /pipeline/source/nginx/nginx.conf /etc/nginx/conf.d/default.conf && nginx -g 'daemon off;'"
+        # We need `bash` to be able to run the next two steps and
+        # an `openssh-client` to (as you might have guessed already) use ssh.
+        - script:
+            name: install packages
+            code: apk add --no-cache openssh-client bash
+        - add-ssh-key:
+            keyname: WERCKER_DEPLOY
+        - add-to-known_hosts:
+            hostname: "$HOST"
+        - script:
+            name: pull latest image
+            code: ssh root@$HOST docker pull $DOCKER_USER/$NGINX_DOCKER_IMAGE:latest
+        - script:
+            name: stop running container
+            code: ssh root@$HOST docker stop $NGINX_DOCKER_IMAGE || echo 'failed to stop running container'
+        - script:
+            name: remove stopped container
+            code: ssh root@$HOST docker rm $NGINX_DOCKER_IMAGE || echo 'failed to remove stopped container'
+        - script:
+            name: remove image behind stopped container
+            code: ssh root@$HOST docker rmi $DOCKER_USER/$NGINX_DOCKER_IMAGE:current || echo 'failed to remove image behind stopped container'
+        - script:
+            name: tag newly pulled image
+            code: ssh root@$HOST docker tag $DOCKER_USER/$NGINX_DOCKER_IMAGE:latest $DOCKER_USER/$NGINX_DOCKER_IMAGE:current
+        - script:
+            name: run new container
+            # The `--net=host` option is important for the container to get access to
+            # the host network. This is a way to reach the other services.
+            #
+            # Well, probably the better solution would be to install direct bridges
+            # between the containers instead of having the host in the middle, but...
+            # This way is simpler and, you know... we have a firewall for additional
+            # access control. So, there are no obvious drawbacks.
+            code: ssh root@$HOST docker run --net=host -d -p 80:80 --name $NGINX_DOCKER_IMAGE $DOCKER_USER/$NGINX_DOCKER_IMAGE:current
