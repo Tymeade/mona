@@ -1,9 +1,9 @@
 deploy-api:
     services:
         - id: postgres
-            env:
-                POSTGRES_PASSWORD: $DB_PASS
-                POSTGRES_USER: $DB_USER
+          env:
+              POSTGRES_PASSWORD: $DB_PASS
+              POSTGRES_USER: $DB_USER
     box: python:3.6
     steps:
         - pip-install:
