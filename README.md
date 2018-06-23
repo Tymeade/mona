@@ -1,4 +1,5 @@
 # mona
+[![wercker status](https://app.wercker.com/status/cfb1bfd22d315e1805f7dcc80f37014e/s/master "wercker status")](https://app.wercker.com/project/byKey/cfb1bfd22d315e1805f7dcc80f37014e)
 
 ## Client application
 
